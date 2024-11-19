@@ -31,14 +31,26 @@ func (h *Handler) SignupController(w http.ResponseWriter, r *http.Request) *util
 	var body User
 	json.NewDecoder(r.Body).Decode(&body)
 
-	if body.Email == "" || body.Password == "" || body.Name == "" {
+	message := map[string]string{
+		"email":    "",
+		"password": "",
+		"name":     "",
+	}
+
+	if body.Email == "" {
+		message["email"] = "Email is required"
+	}
+	if body.Password == "" {
+		message["password"] = "Password is required"
+	}
+	if body.Name == "" {
+		message["name"] = "Name is required"
+	}
+
+	if message["email"] != "" || message["password"] != "" || message["name"] != "" {
 		return &utils.Response{
-			Code: http.StatusBadRequest,
-			Message: map[string]string{
-				"email":    "Email is required",
-				"password": "Password is required",
-				"name":     "Name is required",
-			},
+			Code:    http.StatusBadRequest,
+			Message: message,
 		}
 	}
 
@@ -71,7 +83,7 @@ func (h *Handler) SignupController(w http.ResponseWriter, r *http.Request) *util
 	user.Password = hashedPwd
 
 	user.Create(context.Background(), h.DB, "users", &user)
-	oneMonth := time.Now().Add(30 * 24 * 60 * time.Minute)
+	oneMonth := time.Now().AddDate(0, 1, 0)
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(oneMonth),
@@ -92,13 +104,31 @@ func (h *Handler) SignupController(w http.ResponseWriter, r *http.Request) *util
 	}
 	w.Header().Set("Content-Type", "application/json")
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"jwt": tokenStr,
-		"user": map[string]string{
-			"email": user.Email,
+	secure := true
+	if os.Getenv("APP_ENV") == "development" {
+		secure = false
+	}
+	cookie := &http.Cookie{
+		Name:     "user",
+		Value:    tokenStr,
+		Expires:  oneMonth,
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(w, cookie)
+
+	return &utils.Response{
+		Code: 200,
+		Message: map[string]interface{}{
+			// "jwt": tokenStr,
+			"user": map[string]string{
+				"email": user.Email,
+				"name":  user.Name,
+			},
 		},
-	})
-	return nil
+	}
 }
 
 func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) *utils.Response {
@@ -140,7 +170,7 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) *utils.Re
 		}
 	}
 
-	oneMonth := time.Now().Add(30 * 24 * 60 * time.Minute)
+	oneMonth := time.Now().AddDate(0, 1, 0)
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(oneMonth),
@@ -159,14 +189,33 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) *utils.Re
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"jwt": tokenStr,
-		"user": map[string]string{
-			"email": user.Email,
+
+	secure := true
+	if os.Getenv("APP_ENV") == "development" {
+		secure = false
+	}
+
+	cookie := &http.Cookie{
+		Name:     "user",
+		Value:    tokenStr,
+		Expires:  oneMonth,
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(w, cookie)
+	return &utils.Response{
+		Code: 200,
+		Message: map[string]interface{}{
+			// "jwt": tokenStr,
+			"user": map[string]string{
+				"email": user.Email,
+				"name":  user.Name,
+			},
 		},
-	})
-	return nil
+	}
+
 }
 
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) *utils.Response {

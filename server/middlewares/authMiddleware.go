@@ -36,9 +36,13 @@ func AuthMiddleware(db *mongo.Database) func(next http.Handler) http.Handler {
 			auth_token := r.Header.Get("Authorization")
 
 			if auth_token == "" {
-				w.WriteHeader(404)
-				w.Write([]byte("You are not authorised"))
-				return
+				auth_tokenx, err := r.Cookie("user")
+				if err != nil {
+					w.WriteHeader(404)
+					w.Write([]byte("You are not authorised"))
+					return
+				}
+				auth_token = auth_tokenx.Value
 			}
 
 			token, err := verifyToken(auth_token)

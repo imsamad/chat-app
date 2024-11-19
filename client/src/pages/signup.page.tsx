@@ -11,17 +11,22 @@ import { Label } from '@/components/ui/label';
 
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { FormEventHandler, useState } from 'react';
+import { useState } from 'react';
+import { useAuth } from '@/lib/authCTX';
 
 export function SignupPage() {
+  const { setUser } = useAuth();
+
   const [userData, setUserData] = useState({
-    email: 'imsamad00@gmail.com',
+    email: `imsamad00${Math.random()}@gmail.com`,
     password: 'pwd@Hello123',
+    name: 'Abdus Samad',
   });
 
   const [userError, setUserError] = useState({
     email: '',
     password: '',
+    name: '',
   });
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,10 +59,15 @@ export function SignupPage() {
         'http://localhost:4000/auth/signup',
         userData
       );
+      setUser(data.user);
+    } catch (error: any) {
+      console.error(
+        'error while hitting signup endpoint: reason',
+        error.response.data
+      );
 
-      console.log(data);
-    } catch (error) {
-      console.error('error while hitting signup endpoint: reason', error);
+      const { email, name, password } = error.response.data;
+      setUserError({ email, name, password });
     } finally {
       setIsLoading(false);
     }
@@ -75,12 +85,29 @@ export function SignupPage() {
               <Label htmlFor='name'>Email</Label>
               <Input
                 onChange={handleOnChange}
+                value={userData.name}
+                type='text'
+                name='name'
+                id='name'
+                placeholder='name@email.com'
+              />
+              <p className='text-xs italic text-muted text-red-400'>
+                {userError.name}
+              </p>
+            </div>
+            <div className='flex flex-col space-y-1.5'>
+              <Label htmlFor='email'>Email</Label>
+              <Input
+                onChange={handleOnChange}
                 value={userData.email}
                 type='email'
                 name='email'
                 id='email'
                 placeholder='name@email.com'
               />
+              <p className='text-xs italic text-muted text-red-400'>
+                {userError.email}
+              </p>
             </div>
             <div className='flex flex-col space-y-1.5'>
               <Label htmlFor='password'>password</Label>
@@ -92,6 +119,9 @@ export function SignupPage() {
                 id='password'
                 placeholder='12345678'
               />
+              <p className='text-xs italic text-muted text-red-400'>
+                {userError.password}
+              </p>
             </div>
           </div>
         </form>
@@ -101,11 +131,11 @@ export function SignupPage() {
           <p>
             Already have an account?
             <Link to='/auth/login' className='text-blue-600 underline'>
-              Signup
+              Login
             </Link>
           </p>
         </div>
-        <Button onClick={handleSubmit} size='sm'>
+        <Button onClick={handleSubmit} size='sm' disabled={isLoading}>
           Submit
         </Button>
       </CardFooter>
