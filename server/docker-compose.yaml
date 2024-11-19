@@ -1,0 +1,15 @@
+services:
+  mongo:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: samad
+      MONGO_INITDB_ROOT_PASSWORD: samad
+      MONGO_INITDB_DATABASE: chat-db
+
+volumes:
+  mongo-data:
