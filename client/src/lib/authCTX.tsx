@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { axiosInstance } from './axiosInstance';
 
 type UserType = {
   email: string;
@@ -7,34 +8,42 @@ type UserType = {
 
 const AuthProvider = createContext<{
   user: UserType | null | undefined;
-  setUser: (u: UserType) => void;
+  setUser: (u: UserType, jwt: string) => void;
   logout: () => void;
   isLoggedIn: undefined | boolean;
 }>({
   user: null,
-  setUser: (_u: UserType) => {},
+  setUser: (_u: UserType, _jwt: string) => {},
   logout: () => {},
   isLoggedIn: undefined,
 });
 
 const USER_KEY = '__USER_AUTHED__';
+export const AUTH_TOKEN = '__AUTH_TOKEN__';
 
 export const AuthCtx = ({ children }: { children: React.ReactNode }) => {
   const [user, _setUser] = useState<UserType | null>();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined);
 
-  const setUser = (user: UserType) => {
+  const setUser = (user: UserType, jwt: string) => {
     _setUser(user);
-
+    localStorage.setItem(AUTH_TOKEN, jwt);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     setIsLoggedIn(true);
   };
 
-  const logout = () => {
-    _setUser(null);
+  const logout = async () => {
+    try {
+      await axiosInstance.post('/auth/logout');
+    } catch (error) {
+    } finally {
+      _setUser(null);
 
-    localStorage.removeItem(USER_KEY);
-    setIsLoggedIn(false);
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(AUTH_TOKEN);
+
+      setIsLoggedIn(false);
+    }
   };
 
   // on mount, if user present in local storage set the user detail

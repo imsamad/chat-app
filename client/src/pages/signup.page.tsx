@@ -13,12 +13,13 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useState } from 'react';
 import { useAuth } from '@/lib/authCTX';
+import { axiosInstance } from '@/lib/axiosInstance';
 
 export function SignupPage() {
   const { setUser } = useAuth();
 
   const [userData, setUserData] = useState({
-    email: `imsamad00${Math.random()}@gmail.com`,
+    email: `imsamad00@gmail.com`,
     password: 'pwd@Hello123',
     name: 'Abdus Samad',
   });
@@ -55,10 +56,7 @@ export function SignupPage() {
 
       console.log(userData);
 
-      const { data } = await axios.post(
-        'http://localhost:4000/auth/signup',
-        userData
-      );
+      const { data } = await axiosInstance.post('/auth/signup', userData);
       setUser(data.user);
     } catch (error: any) {
       console.error(

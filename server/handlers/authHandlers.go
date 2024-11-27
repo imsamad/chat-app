@@ -28,6 +28,7 @@ type Claims struct {
 
 func (h *Handler) SignupController(w http.ResponseWriter, r *http.Request) *utils.Response {
 
+	// jsonify user creds
 	var body User
 	json.NewDecoder(r.Body).Decode(&body)
 
@@ -37,6 +38,7 @@ func (h *Handler) SignupController(w http.ResponseWriter, r *http.Request) *util
 		"name":     "",
 	}
 
+	// validate data
 	if body.Email == "" {
 		message["email"] = "Email is required"
 	}
@@ -56,9 +58,10 @@ func (h *Handler) SignupController(w http.ResponseWriter, r *http.Request) *util
 
 	var user mongorm.UserModel
 
-	user.Read(context.Background(), h.DB, "users", bson.M{"email": body.Email}, &user)
+	// check if user already exist with the user sent email
+	err := user.Read(context.Background(), h.DB, "users", bson.M{"email": body.Email}, user, nil)
 
-	if user.Email != "" {
+	if err != nil || user.Email != "" {
 		return &utils.Response{
 			Code: http.StatusConflict,
 			Message: map[string]string{
@@ -68,21 +71,29 @@ func (h *Handler) SignupController(w http.ResponseWriter, r *http.Request) *util
 	}
 	user.Email = body.Email
 	user.Name = body.Name
-	user.Friends = []primitive.ObjectID{}
+
 	hashedPwd, err := utils.HashPassword(body.Password)
 
 	if err != nil {
-		fmt.Println("below is error during hashing the passwrd")
-		fmt.Println(err)
 		return &utils.Response{
 			Message: map[string]string{"message": "Please try again"},
 			Code:    http.StatusInternalServerError,
 		}
 	}
 
+	// set hashed pwd
 	user.Password = hashedPwd
 
-	user.Create(context.Background(), h.DB, "users", &user)
+	// create user entry
+	err = user.Create(context.Background(), h.DB, "users", &user)
+	if err != nil {
+		return &utils.Response{
+			Message: map[string]string{"message": "Please try again"},
+			Code:    http.StatusInternalServerError,
+		}
+	}
+
+	// issue jwt token
 	oneMonth := time.Now().AddDate(0, 1, 0)
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -102,7 +113,6 @@ func (h *Handler) SignupController(w http.ResponseWriter, r *http.Request) *util
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
 
 	secure := true
 	if os.Getenv("APP_ENV") == "development" {
@@ -122,7 +132,7 @@ func (h *Handler) SignupController(w http.ResponseWriter, r *http.Request) *util
 	return &utils.Response{
 		Code: 200,
 		Message: map[string]interface{}{
-			// "jwt": tokenStr,
+			"jwt": tokenStr,
 			"user": map[string]string{
 				"email": user.Email,
 				"name":  user.Name,
@@ -149,7 +159,7 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) *utils.Re
 
 	var user mongorm.UserModel
 
-	err := user.Read(context.Background(), h.DB, "users", bson.M{"email": body.Email}, &user)
+	err := user.Read(context.Background(), h.DB, "users", bson.M{"email": body.Email}, &user, nil)
 
 	if err != nil {
 		fmt.Println(err)
@@ -208,24 +218,39 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) *utils.Re
 	return &utils.Response{
 		Code: 200,
 		Message: map[string]interface{}{
-			// "jwt": tokenStr,
+			"jwt": tokenStr,
 			"user": map[string]string{
 				"email": user.Email,
 				"name":  user.Name,
 			},
 		},
 	}
+}
 
+func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) *utils.Response {
+	http.SetCookie(w, &http.Cookie{
+		Name:   "user",
+		Value:  "",
+		MaxAge: -1,
+	})
+
+	return &utils.Response{
+		Code: 200,
+		Message: map[string]interface{}{
+			"message": "logged out successfully!",
+		},
+	}
 }
 
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) *utils.Response {
 	user_id := r.Context().Value("user").(primitive.ObjectID)
-
+	fmt.Print("i was hitted")
 	var user mongorm.UserModel
 
-	err := user.Read(context.Background(), h.DB, "users", bson.M{"_id": user_id}, &user)
+	err := user.Read(context.Background(), h.DB, "users", bson.M{"_id": user_id}, &user, nil)
 
 	if err != nil {
+		fmt.Println("err: ", err)
 		return &utils.Response{
 			Code:    http.StatusNoContent,
 			Message: "There is not user",

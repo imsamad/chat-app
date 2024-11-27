@@ -4,6 +4,11 @@
 .log {
   border: 2px solid red;
 }
+
+.green {
+  border: 2px solid green;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

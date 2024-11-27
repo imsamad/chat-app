@@ -2,7 +2,6 @@ import {
   createBrowserRouter,
   createRoutesFromElements,
   Outlet,
-  redirect,
   Route,
   RouterProvider,
   useNavigate,
@@ -14,6 +13,7 @@ import { Layout } from './components/layout';
 import { useAuth } from './lib/authCTX';
 import { useEffect } from 'react';
 import { ChatPage } from './pages/chat.page';
+import { ChatsCtxProvider } from './contexts/ChatCtx';
 
 const GuestPages = () => {
   const { isLoggedIn } = useAuth();
@@ -46,7 +46,14 @@ const routers = createBrowserRouter(
         <Route path='auth/signup' element={<SignupPage />} />
       </Route>
       <Route element={<ProtectedPages />}>
-        <Route path='/chat' element={<ChatPage />} />
+        <Route
+          path='/chat'
+          element={
+            <ChatsCtxProvider>
+              <ChatPage />
+            </ChatsCtxProvider>
+          }
+        />
       </Route>
     </Route>
   )

@@ -32,9 +32,10 @@ func verifyToken(tokenString string) (jwt.MapClaims, error) {
 
 func AuthMiddleware(db *mongo.Database) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			auth_token := r.Header.Get("Authorization")
 
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			auth_token := r.Header.Get("Authorization")
 			if auth_token == "" {
 				auth_tokenx, err := r.Cookie("user")
 				if err != nil {
@@ -70,7 +71,7 @@ func AuthMiddleware(db *mongo.Database) func(next http.Handler) http.Handler {
 
 			var user mongorm.UserModel
 
-			err = user.Read(context.Background(), db, "users", bson.M{"_id": user_id}, &user)
+			err = user.Read(context.Background(), db, "users", bson.M{"_id": user_id}, &user, nil)
 
 			if err != nil {
 				fmt.Println("error while fetching user from db: ", err)
