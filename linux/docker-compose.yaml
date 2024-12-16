@@ -1,0 +1,7 @@
+services:
+  sys1:
+    build: .
+  sys2:
+    build: .
+  sys3:
+    build: .

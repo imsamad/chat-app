@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "./";
+
+message HelloRequst{
+    string req = 1;
+}
+
+message HelloResponse {
+    string res = 1;
+}
+
+service HelloWorld {
+    rpc Default(HelloRequst) returns (HelloResponse);
+    rpc ClientStream(stream HelloRequst) returns (HelloResponse);
+    rpc ServerStream(HelloRequst) returns (stream HelloResponse);
+    rpc Bidirectional(stream HelloRequst) returns (stream HelloResponse);
+}
