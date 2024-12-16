@@ -118,6 +118,7 @@ func (h *Handler) SignupController(w http.ResponseWriter, r *http.Request) *util
 	if os.Getenv("APP_ENV") == "development" {
 		secure = false
 	}
+
 	cookie := &http.Cookie{
 		Name:     "user",
 		Value:    tokenStr,

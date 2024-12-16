@@ -19,10 +19,11 @@ const AuthProvider = createContext<{
 });
 
 const USER_KEY = '__USER_AUTHED__';
+
 export const AUTH_TOKEN = '__AUTH_TOKEN__';
 
 export const AuthCtx = ({ children }: { children: React.ReactNode }) => {
-  const [user, _setUser] = useState<UserType | null>();
+  const [user, _setUser] = useState<UserType | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined);
 
   const setUser = (user: UserType, jwt: string) => {
@@ -46,14 +47,14 @@ export const AuthCtx = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // on mount, if user present in local storage set the user detail
   useEffect(() => {
     const userStored = localStorage.getItem(USER_KEY);
     if (!userStored) {
       setIsLoggedIn(false);
       return;
     }
-    setIsLoggedIn(!false);
+    // on mount, if user persisted in local storage set the user detail
+   setIsLoggedIn(!false);
 
     _setUser(JSON.parse(userStored));
   }, []);

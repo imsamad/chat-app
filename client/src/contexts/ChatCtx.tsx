@@ -41,6 +41,7 @@ type ChatContextType = {
   friends: TUser[];
 
   isSettingUp: boolean;
+  getMessage: (friendship_id: string) => TMessage[] | [];
   messages: Record<string, TMessage[]>;
 };
 
@@ -50,6 +51,7 @@ const ChatCtx = createContext<ChatContextType>({
   isSettingUp: false,
 
   messages: {},
+  getMessage: (id: string) => [],
 });
 
 export const ChatsCtxProvider = ({ children }: { children: ReactElement }) => {
@@ -96,8 +98,18 @@ export const ChatsCtxProvider = ({ children }: { children: ReactElement }) => {
 
   const cleanChat = (friendship_id: string) => {};
 
+  const getMessage = async (friendship_id: string) => {
+    const message = messages[friendship_id];
+
+    if (message) return message;
+
+    try {
+      const { data } = await axiosInstance.get('/messages');
+      console.log('data: ', data);
+    } catch {}
+  };
   return (
-    <ChatCtx.Provider value={{ friends, isSettingUp, messages }}>
+    <ChatCtx.Provider value={{ friends, isSettingUp, messages, getMessage }}>
       {children}
     </ChatCtx.Provider>
   );

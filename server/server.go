@@ -6,7 +6,6 @@ import (
 	"chat-app/mongorm"
 	"chat-app/utils"
 	"encoding/json"
-	"io"
 
 	"fmt"
 	"log"
@@ -62,7 +61,7 @@ func runServer() {
 		os.Exit(1)
 	}
 
-	db := mongoClient.Database("chat-db")
+	fmt.Println("DB connected!")
 
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
@@ -75,28 +74,7 @@ func runServer() {
 	}))
 	r.Use(middleware.Logger)
 
-	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		// Read the body into a buffer
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "Failed to read body", http.StatusInternalServerError)
-			return
-		}
-		defer r.Body.Close()
-
-		type X struct {
-			Abcd string `json:"abcd"`
-			Xyz  string `json:"xyz"`
-		}
-		var xx X
-		e := json.Unmarshal(body, &xx)
-		fmt.Println(e)
-		fmt.Println("xx: ", xx)
-		var m = make(map[string]string)
-		json.Unmarshal(body, &m)
-		fmt.Println("m: ", m)
-
-	})
+	db := mongoClient.Database("chat-db")
 	handler := handlers.New(db)
 
 	authRouter := chi.NewRouter()

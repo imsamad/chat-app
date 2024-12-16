@@ -143,7 +143,6 @@ func ObjectIDsToHex(ids []primitive.ObjectID) []string {
 	for i, id := range ids {
 		result[i] = id.Hex()
 	}
-
 	return result
 }
 

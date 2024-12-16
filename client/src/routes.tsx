@@ -15,6 +15,7 @@ import { useEffect } from 'react';
 import { ChatPage } from './pages/chat.page';
 import { ChatsCtxProvider } from './contexts/ChatCtx';
 
+// Pages for non-logged in users
 const GuestPages = () => {
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ const GuestPages = () => {
   return <Outlet />;
 };
 
+// Pages for logged in users
 const ProtectedPages = () => {
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
